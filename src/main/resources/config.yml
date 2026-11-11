@@ -4,3 +4,7 @@ spawn-protection:
   size: 6000
   # Leave empty to protect the main world, or put a world name here.
   world: ""
+enderchest:
+  enabled: true
+  # 5 rows = 45 slots, 6 rows = 54 slots (double chest). Max 6.
+  rows: 5
