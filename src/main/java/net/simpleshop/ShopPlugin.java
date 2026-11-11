@@ -30,6 +30,9 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 49;
     private static final int SLOT_NEXT = 53;
+    private static final int SLOT_CANCEL = 9;
+    private static final int SLOT_ITEM = 13;
+    private static final int SLOT_CONFIRM = 17;
 
     private Map<Catalog.Category, List<Catalog.Entry>> catalog;
 
