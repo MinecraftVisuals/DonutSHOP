@@ -38,6 +38,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
     private static final int SLOT_CONFIRM = 17;
 
     private Map<Catalog.Category, List<Catalog.Entry>> catalog;
+    private EnderChests enderChests;
 
     @Override
     public void onEnable() {
@@ -45,6 +46,9 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         catalog = Catalog.build();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new SpawnProtection(this), this);
+
+        enderChests = new EnderChests(this);
+        getServer().getPluginManager().registerEvents(enderChests, this);
 
         PluginCommand cmd = getCommand("shop");
         if (cmd != null) {
@@ -56,6 +60,11 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
             total += list.size();
         }
         getLogger().info("SimpleShop loaded with " + total + " items.");
+    }
+
+    @Override
+    public void onDisable() {
+        if (enderChests != null) enderChests.saveAll();
     }
 
     private boolean onShopCommand(CommandSender sender, Command command, String label, String[] args) {
