@@ -2,13 +2,22 @@ name: SimpleShop
 version: 1.0.0
 main: net.simpleshop.ShopPlugin
 api-version: '1.21'
-description: XP level shop and spawn protection
-depend: [ShardShop]
+description: XP level + shard shop, shard earning, 3x3 Shard Pickaxe and spawn protection
 commands:
   shop:
     description: Open the shop
     usage: /shop
+  shards:
+    description: Shows your shard balance
+    usage: /shards
+  giveshards:
+    description: Give shards to a player
+    usage: /giveshards <player> <amount>
+    permission: shardshop.admin
 permissions:
+  shardshop.admin:
+    description: Allows giving shards
+    default: op
   simpleshop.spawn.bypass:
     description: Build and break blocks inside the protected spawn area
     default: false
