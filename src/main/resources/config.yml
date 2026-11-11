@@ -7,4 +7,4 @@ spawn-protection:
 enderchest:
   enabled: true
   # 5 rows = 45 slots, 6 rows = 54 slots (double chest). Max 6.
-  rows: 5
+  rows: 6
