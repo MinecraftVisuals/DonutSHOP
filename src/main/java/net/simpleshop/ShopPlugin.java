@@ -34,8 +34,10 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         catalog = Catalog.build();
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new SpawnProtection(this), this);
 
         PluginCommand cmd = getCommand("shop");
         if (cmd != null) {
