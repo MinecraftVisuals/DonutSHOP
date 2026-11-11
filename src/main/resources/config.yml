@@ -1,6 +1,6 @@
 spawn-protection:
   enabled: true
   # Side length of the protected square, in blocks, centered on the world spawn.
-  size: 332
+  size: 6000
   # Leave empty to protect the main world, or put a world name here.
   world: ""
