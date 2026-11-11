@@ -1,15 +1,15 @@
 package net.simpleshop;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.entity.EntityType;
 import org.bukkit.potion.PotionType;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -24,13 +24,14 @@ public final class Catalog {
     // give = what the player receives, icon = what is shown in the menu
     public record Entry(ItemStack give, ItemStack icon, Component name, int price) {}
 
-    // Main menu slots are in the middle row (11-15)
+    // Main menu: middle row is slots 11-15, BLOCKS sits directly under the Totem (slot 13 -> 22)
     public enum Category {
         END("End", Material.END_STONE, 11),
         NETHER("Nether", Material.NETHER_WART_BLOCK, 12),
         GEAR("Gear", Material.TOTEM_OF_UNDYING, 13),
         FOOD("Food", Material.COOKED_BEEF, 14),
-        SHARDS("Shards", Material.AMETHYST_SHARD, 15);
+        SHARDS("Shards", Material.AMETHYST_SHARD, 15),
+        BLOCKS("Blocks", Material.COBBLESTONE, 22);
 
         public final String title;
         public final Material icon;
@@ -77,6 +78,11 @@ public final class Catalog {
 
         // ---- Shards / Spawners (max 9) ----
         addSpawners(map.get(Category.SHARDS));
+
+        // ---- Blocks (7) ----
+        addNamed(map.get(Category.BLOCKS),
+                "SPRUCE_LOG", "DIORITE", "OAK_LOG", "STONE_BRICKS",
+                "BIRCH_LOG", "PALE_OAK_LOG", "SAND");
 
         return map;
     }
