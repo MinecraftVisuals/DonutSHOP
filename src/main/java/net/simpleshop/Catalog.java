@@ -2,13 +2,18 @@ package net.simpleshop;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionType;
 
 import java.util.ArrayList;
@@ -20,6 +25,11 @@ public final class Catalog {
 
     public static final int SPAWNER_PRICE = 250; // paid in shards
     public static final int STACK_PRICE = 1;     // paid in XP levels
+
+    // Shard Pickaxe: sits in the Shards menu directly under the middle spawner (slot 13 -> 22)
+    public static final int PICKAXE_PRICE = 100; // paid in shards
+    public static final int PICKAXE_SLOT = 22;
+    private static final TextColor FUCHSIA = TextColor.color(0xFF00FF);
 
     public enum Currency { LEVELS, SHARDS }
 
@@ -92,6 +102,28 @@ public final class Catalog {
                 "BIRCH_LOG", "PALE_OAK_LOG", "SAND");
 
         return map;
+    }
+
+    /** The Shard Pickaxe (netherite, breaks a 3x3 area). Kept out of the spawner row on purpose. */
+    public static Entry shardPickaxe(NamespacedKey toolKey) {
+        ItemStack item = new ItemStack(Material.NETHERITE_PICKAXE);
+        ItemMeta meta = item.getItemMeta();
+
+        Component name = Component.text("Shard Pickaxe", FUCHSIA).decoration(TextDecoration.ITALIC, false);
+        meta.displayName(name);
+        meta.lore(List.of(
+                Component.text("Breaks a 3x3 area", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+        ));
+        meta.getPersistentDataContainer().set(toolKey, PersistentDataType.STRING, "pickaxe");
+
+        // ---- Enchantments (change levels or add/remove lines as you like) ----
+        meta.addEnchant(Enchantment.EFFICIENCY, 5, true);
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true);
+        meta.addEnchant(Enchantment.MENDING, 1, true);
+        meta.addEnchant(Enchantment.FORTUNE, 3, true);
+
+        item.setItemMeta(meta);
+        return new Entry(item, item.clone(), name, PICKAXE_PRICE, Currency.SHARDS);
     }
 
     private static void addNamed(List<Entry> list, String... names) {
