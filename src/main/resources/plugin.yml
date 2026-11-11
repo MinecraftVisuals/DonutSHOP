@@ -2,8 +2,12 @@ name: SimpleShop
 version: 1.0.0
 main: net.simpleshop.ShopPlugin
 api-version: '1.21'
-description: XP level shop opened with /shop
+description: XP level shop and spawn protection
 commands:
   shop:
     description: Open the shop
     usage: /shop
+permissions:
+  simpleshop.spawn.bypass:
+    description: Build and break blocks inside the protected spawn area
+    default: false
