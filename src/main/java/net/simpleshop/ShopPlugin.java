@@ -26,11 +26,10 @@ import java.util.Map;
 
 public final class ShopPlugin extends JavaPlugin implements Listener {
 
-    // category pages: 3-row chest, items in the top 2 rows, buttons in the bottom row
-    private static final int PAGE_SIZE = 18;
-    private static final int SLOT_PREV = 18;
-    private static final int SLOT_BACK = 22;
-    private static final int SLOT_NEXT = 26;
+    // category pages: 3-row chest, items centered in the MIDDLE row (slots 9-17)
+    private static final int MIDDLE_ROW_START = 9;
+    private static final int ROW_WIDTH = 9;
+    private static final int SLOT_BACK = 18; // bottom-left, red
 
     // confirm menu: 3-row chest
     private static final int SLOT_CANCEL = 9;
@@ -76,6 +75,12 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         return true;
     }
 
+    // first slot of the middle row so that `count` items are centered
+    private static int startSlot(int count) {
+        int n = Math.min(count, ROW_WIDTH);
+        return MIDDLE_ROW_START + (ROW_WIDTH - n) / 2;
+    }
+
     // ---------- menus ----------
 
     private void openMain(Player player) {
@@ -97,29 +102,26 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         player.openInventory(inv);
     }
 
-    private void openCategory(Player player, Catalog.Category category, int page) {
+    private void openCategory(Player player, Catalog.Category category) {
         List<Catalog.Entry> entries = catalog.get(category);
-        int pages = Math.max(1, (entries.size() + PAGE_SIZE - 1) / PAGE_SIZE);
-        page = Math.max(0, Math.min(page, pages - 1));
 
-        ShopHolder holder = new ShopHolder(category, page);
+        ShopHolder holder = new ShopHolder(category, 0);
         Inventory inv = Bukkit.createInventory(holder, 27,
-                Component.text("SHOP - " + category.title + " (" + (page + 1) + "/" + pages + ")"));
+                Component.text("SHOP - " + category.title.toUpperCase()));
         holder.setInventory(inv);
 
-        int start = page * PAGE_SIZE;
-        for (int i = 0; i < PAGE_SIZE && start + i < entries.size(); i++) {
-            inv.setItem(i, display(entries.get(start + i)));
+        int start = startSlot(entries.size());
+        for (int i = 0; i < entries.size() && i < ROW_WIDTH; i++) {
+            inv.setItem(start + i, display(entries.get(i)));
         }
-        if (page > 0) inv.setItem(SLOT_PREV, button(Material.ARROW, "Previous page"));
-        inv.setItem(SLOT_BACK, button(Material.BARRIER, "Back"));
-        if (page < pages - 1) inv.setItem(SLOT_NEXT, button(Material.ARROW, "Next page"));
+
+        inv.setItem(SLOT_BACK, backButton());
 
         player.openInventory(inv);
     }
 
-    private void openConfirm(Player player, Catalog.Category category, int page, Catalog.Entry entry) {
-        ShopHolder holder = new ShopHolder(category, page, entry);
+    private void openConfirm(Player player, Catalog.Category category, Catalog.Entry entry) {
+        ShopHolder holder = new ShopHolder(category, 0, entry);
         Inventory inv = Bukkit.createInventory(holder, 27, Component.text("Confirm purchase"));
         holder.setInventory(inv);
 
@@ -165,10 +167,10 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         return item;
     }
 
-    private ItemStack button(Material material, String name) {
-        ItemStack item = new ItemStack(material);
+    private ItemStack backButton() {
+        ItemStack item = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(line(name, NamedTextColor.YELLOW));
+        meta.displayName(line("Back", NamedTextColor.RED));
         item.setItemMeta(meta);
         return item;
     }
@@ -193,9 +195,9 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         if (holder.pending() != null) {
             if (slot == SLOT_CONFIRM) {
                 buy(player, holder.pending());
-                openCategory(player, holder.category(), holder.page());
+                openCategory(player, holder.category());
             } else if (slot == SLOT_CANCEL) {
-                openCategory(player, holder.category(), holder.page());
+                openCategory(player, holder.category());
             }
             return;
         }
@@ -204,7 +206,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         if (holder.category() == null) {
             for (Catalog.Category c : Catalog.Category.values()) {
                 if (c.slot == slot) {
-                    openCategory(player, c, 0);
+                    openCategory(player, c);
                     return;
                 }
             }
@@ -215,17 +217,13 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         List<Catalog.Entry> entries = catalog.get(holder.category());
         if (slot == SLOT_BACK) {
             openMain(player);
-        } else if (slot == SLOT_PREV) {
-            if (holder.page() > 0) openCategory(player, holder.category(), holder.page() - 1);
-        } else if (slot == SLOT_NEXT) {
-            if ((holder.page() + 1) * PAGE_SIZE < entries.size()) {
-                openCategory(player, holder.category(), holder.page() + 1);
-            }
-        } else if (slot >= 0 && slot < PAGE_SIZE) {
-            int index = holder.page() * PAGE_SIZE + slot;
-            if (index < entries.size()) {
-                openConfirm(player, holder.category(), holder.page(), entries.get(index));
-            }
+            return;
+        }
+
+        int start = startSlot(entries.size());
+        int index = slot - start;
+        if (index >= 0 && index < entries.size() && index < ROW_WIDTH) {
+            openConfirm(player, holder.category(), entries.get(index));
         }
     }
 
