@@ -26,15 +26,11 @@ import java.util.Map;
 
 public final class ShopPlugin extends JavaPlugin implements Listener {
 
-    private static final int PAGE_SIZE = 45;
-    private static final int SLOT_PREV = 45;
-    private static final int SLOT_BACK = 49;
-    private static final int SLOT_NEXT = 53;
     private static final int SLOT_CANCEL = 9;
     private static final int SLOT_ITEM = 13;
     private static final int SLOT_CONFIRM = 17;
 
-    private Map<Catalog.Category, List<Catalog.Entry>> catalog;
+    private List<Catalog.Entry> catalog;
 
     @Override
     public void onEnable() {
@@ -45,12 +41,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         if (cmd != null) {
             cmd.setExecutor(this::onShopCommand);
         }
-
-        int total = 0;
-        for (List<Catalog.Entry> list : catalog.values()) {
-            total += list.size();
-        }
-        getLogger().info("SimpleShop loaded with " + total + " items.");
+        getLogger().info("SimpleShop loaded with " + catalog.size() + " items.");
     }
 
     private boolean onShopCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -58,54 +49,32 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
             sender.sendMessage("Only players can use /shop.");
             return true;
         }
-        openMain(player);
+        openShop(player);
         return true;
     }
 
     // ---------- menus ----------
 
-    private void openMain(Player player) {
-        ShopHolder holder = new ShopHolder(null, 0);
+    private void openShop(Player player) {
+        ShopHolder holder = new ShopHolder(null);
         Inventory inv = Bukkit.createInventory(holder, 27, Component.text("SHOP"));
         holder.setInventory(inv);
 
-        for (Catalog.Category c : Catalog.Category.values()) {
-            ItemStack item = new ItemStack(c.icon);
+        for (Catalog.Entry entry : catalog) {
+            ItemStack item = entry.give().clone();
             ItemMeta meta = item.getItemMeta();
-            meta.displayName(line(c.title, NamedTextColor.GOLD));
             List<Component> lore = new ArrayList<>();
-            lore.add(line(catalog.get(c).size() + " items", NamedTextColor.GRAY));
-            lore.add(line("Click to open", NamedTextColor.YELLOW));
+            lore.add(line("Price: " + levels(entry.price()), NamedTextColor.GOLD));
+            lore.add(line("Click to buy", NamedTextColor.YELLOW));
             meta.lore(lore);
             item.setItemMeta(meta);
-            inv.setItem(c.slot, item);
+            inv.setItem(entry.slot(), item);
         }
         player.openInventory(inv);
     }
 
-    private void openCategory(Player player, Catalog.Category category, int page) {
-        List<Catalog.Entry> entries = catalog.get(category);
-        int pages = Math.max(1, (entries.size() + PAGE_SIZE - 1) / PAGE_SIZE);
-        page = Math.max(0, Math.min(page, pages - 1));
-
-        ShopHolder holder = new ShopHolder(category, page);
-        Inventory inv = Bukkit.createInventory(holder, 54,
-                Component.text("SHOP - " + category.title + " (" + (page + 1) + "/" + pages + ")"));
-        holder.setInventory(inv);
-
-        int start = page * PAGE_SIZE;
-        for (int i = 0; i < PAGE_SIZE && start + i < entries.size(); i++) {
-            inv.setItem(i, display(entries.get(start + i)));
-        }
-        if (page > 0) inv.setItem(SLOT_PREV, button(Material.ARROW, "Previous page"));
-        inv.setItem(SLOT_BACK, button(Material.BARRIER, "Back"));
-        if (page < pages - 1) inv.setItem(SLOT_NEXT, button(Material.ARROW, "Next page"));
-
-        player.openInventory(inv);
-    }
-
-    private void openConfirm(Player player, Catalog.Category category, int page, Catalog.Entry entry) {
-        ShopHolder holder = new ShopHolder(category, page, entry);
+    private void openConfirm(Player player, Catalog.Entry entry) {
+        ShopHolder holder = new ShopHolder(entry);
         Inventory inv = Bukkit.createInventory(holder, 27, Component.text("Confirm purchase"));
         holder.setInventory(inv);
 
@@ -116,11 +85,10 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         cancel.setItemMeta(cancelMeta);
         inv.setItem(SLOT_CANCEL, cancel);
 
-        // the item being bought
-        ItemStack item = entry.icon().clone();
+        // the spawner being bought
+        ItemStack item = entry.give().clone();
         ItemMeta itemMeta = item.getItemMeta();
         List<Component> itemLore = new ArrayList<>();
-        itemLore.add(line("You get: " + entry.give().getAmount() + "x", NamedTextColor.GRAY));
         itemLore.add(line("Price: " + levels(entry.price()), NamedTextColor.GOLD));
         itemMeta.lore(itemLore);
         item.setItemMeta(itemMeta);
@@ -137,26 +105,6 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         inv.setItem(SLOT_CONFIRM, confirm);
 
         player.openInventory(inv);
-    }
-
-    private ItemStack display(Catalog.Entry entry) {
-        ItemStack item = entry.icon().clone();
-        ItemMeta meta = item.getItemMeta();
-        List<Component> lore = new ArrayList<>();
-        lore.add(line("Price: " + levels(entry.price()), NamedTextColor.GOLD));
-        lore.add(line("You get: " + entry.give().getAmount() + "x", NamedTextColor.GRAY));
-        lore.add(line("Click to buy", NamedTextColor.YELLOW));
-        meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    private ItemStack button(Material material, String name) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.displayName(line(name, NamedTextColor.YELLOW));
-        item.setItemMeta(meta);
-        return item;
     }
 
     // ---------- events ----------
@@ -179,38 +127,18 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         if (holder.pending() != null) {
             if (slot == SLOT_CONFIRM) {
                 buy(player, holder.pending());
-                openCategory(player, holder.category(), holder.page());
+                openShop(player);
             } else if (slot == SLOT_CANCEL) {
-                openCategory(player, holder.category(), holder.page());
+                openShop(player);
             }
             return;
         }
 
-        // main menu
-        if (holder.category() == null) {
-            for (Catalog.Category c : Catalog.Category.values()) {
-                if (c.slot == slot) {
-                    openCategory(player, c, 0);
-                    return;
-                }
-            }
-            return;
-        }
-
-        // category menu
-        List<Catalog.Entry> entries = catalog.get(holder.category());
-        if (slot == SLOT_BACK) {
-            openMain(player);
-        } else if (slot == SLOT_PREV) {
-            if (holder.page() > 0) openCategory(player, holder.category(), holder.page() - 1);
-        } else if (slot == SLOT_NEXT) {
-            if ((holder.page() + 1) * PAGE_SIZE < entries.size()) {
-                openCategory(player, holder.category(), holder.page() + 1);
-            }
-        } else if (slot >= 0 && slot < PAGE_SIZE) {
-            int index = holder.page() * PAGE_SIZE + slot;
-            if (index < entries.size()) {
-                openConfirm(player, holder.category(), holder.page(), entries.get(index));
+        // main shop
+        for (Catalog.Entry entry : catalog) {
+            if (entry.slot() == slot) {
+                openConfirm(player, entry);
+                return;
             }
         }
     }
@@ -239,8 +167,8 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
             player.getWorld().dropItemNaturally(player.getLocation(), rest);
         }
 
-        player.sendMessage(Component.text("Bought " + entry.give().getAmount() + "x ", NamedTextColor.GREEN)
-                .append(entry.name().color(NamedTextColor.WHITE))
+        player.sendMessage(Component.text("Bought ", NamedTextColor.GREEN)
+                .append(entry.name())
                 .append(Component.text(" for " + levels(price) + ".", NamedTextColor.GREEN)));
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
     }
