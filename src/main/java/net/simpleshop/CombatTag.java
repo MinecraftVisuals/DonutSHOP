@@ -69,7 +69,18 @@ public final class CombatTag implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        tagged.remove(e.getPlayer().getUniqueId());
+        Player player = e.getPlayer();
+        boolean wasInCombat = isInCombat(player);
+        tagged.remove(player.getUniqueId());
+
+        // don't kill anyone when the server itself is shutting down
+        if (wasInCombat && !Bukkit.isStopping()) {
+            Bukkit.broadcast(
+                    Component.text(player.getName(), NamedTextColor.WHITE)
+                            .append(Component.text(" logged out in combat and died.", NamedTextColor.RED))
+            );
+            player.setHealth(0.0); // drops their items and counts as a normal death
+        }
     }
 
     private void tick() {
