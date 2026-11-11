@@ -104,6 +104,41 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         player.openInventory(inv);
     }
 
+    private void openConfirm(Player player, Catalog.Category category, int page, Catalog.Entry entry) {
+        ShopHolder holder = new ShopHolder(category, page, entry);
+        Inventory inv = Bukkit.createInventory(holder, 27, Component.text("Confirm purchase"));
+        holder.setInventory(inv);
+
+        // red = cancel
+        ItemStack cancel = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+        ItemMeta cancelMeta = cancel.getItemMeta();
+        cancelMeta.displayName(line("Cancel", NamedTextColor.RED));
+        cancel.setItemMeta(cancelMeta);
+        inv.setItem(SLOT_CANCEL, cancel);
+
+        // the item being bought
+        ItemStack item = entry.icon().clone();
+        ItemMeta itemMeta = item.getItemMeta();
+        List<Component> itemLore = new ArrayList<>();
+        itemLore.add(line("You get: " + entry.give().getAmount() + "x", NamedTextColor.GRAY));
+        itemLore.add(line("Price: " + levels(entry.price()), NamedTextColor.GOLD));
+        itemMeta.lore(itemLore);
+        item.setItemMeta(itemMeta);
+        inv.setItem(SLOT_ITEM, item);
+
+        // green = confirm
+        ItemStack confirm = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+        ItemMeta confirmMeta = confirm.getItemMeta();
+        confirmMeta.displayName(line("Confirm", NamedTextColor.GREEN));
+        List<Component> confirmLore = new ArrayList<>();
+        confirmLore.add(line("Pay " + levels(entry.price()), NamedTextColor.GOLD));
+        confirmMeta.lore(confirmLore);
+        confirm.setItemMeta(confirmMeta);
+        inv.setItem(SLOT_CONFIRM, confirm);
+
+        player.openInventory(inv);
+    }
+
     private ItemStack display(Catalog.Entry entry) {
         ItemStack item = entry.icon().clone();
         ItemMeta meta = item.getItemMeta();
@@ -140,6 +175,17 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
 
         int slot = e.getSlot();
 
+        // confirm menu
+        if (holder.pending() != null) {
+            if (slot == SLOT_CONFIRM) {
+                buy(player, holder.pending());
+                openCategory(player, holder.category(), holder.page());
+            } else if (slot == SLOT_CANCEL) {
+                openCategory(player, holder.category(), holder.page());
+            }
+            return;
+        }
+
         // main menu
         if (holder.category() == null) {
             for (Catalog.Category c : Catalog.Category.values()) {
@@ -164,7 +210,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         } else if (slot >= 0 && slot < PAGE_SIZE) {
             int index = holder.page() * PAGE_SIZE + slot;
             if (index < entries.size()) {
-                buy(player, entries.get(index));
+                openConfirm(player, holder.category(), holder.page(), entries.get(index));
             }
         }
     }
