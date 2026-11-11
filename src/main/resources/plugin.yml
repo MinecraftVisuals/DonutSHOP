@@ -14,6 +14,18 @@ commands:
     description: Give shards to a player
     usage: /giveshards <player> <amount>
     permission: shardshop.admin
+  tp:
+    description: Send a teleport request to a player
+    usage: /tp <player>
+  tphere:
+    description: Ask a player to teleport to you
+    usage: /tphere <player>
+  tpaccept:
+    description: Accept a teleport request
+    usage: /tpaccept [player]
+  tpdeny:
+    description: Deny a teleport request
+    usage: /tpdeny [player]
 permissions:
   shardshop.admin:
     description: Allows giving shards
