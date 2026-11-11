@@ -18,11 +18,18 @@ import java.util.Map;
 
 public final class Catalog {
 
-    public static final int SPAWNER_PRICE = 10;
-    public static final int STACK_PRICE = 1;
+    public static final int SPAWNER_PRICE = 250; // paid in shards
+    public static final int STACK_PRICE = 1;     // paid in XP levels
+
+    public enum Currency { LEVELS, SHARDS }
 
     // give = what the player receives, icon = what is shown in the menu
-    public record Entry(ItemStack give, ItemStack icon, Component name, int price) {}
+    public record Entry(ItemStack give, ItemStack icon, Component name, int price, Currency currency) {
+        // everything defaults to XP levels unless a currency is given
+        public Entry(ItemStack give, ItemStack icon, Component name, int price) {
+            this(give, icon, name, price, Currency.LEVELS);
+        }
+    }
 
     // Main menu: middle row is slots 11-15, BLOCKS sits directly under the Totem (slot 13 -> 22)
     public enum Category {
@@ -130,7 +137,7 @@ public final class Catalog {
             meta.displayName(name);
             spawner.setItemMeta(meta);
 
-            list.add(new Entry(spawner, spawner.clone(), name, SPAWNER_PRICE));
+            list.add(new Entry(spawner, spawner.clone(), name, SPAWNER_PRICE, Currency.SHARDS));
         }
     }
 
