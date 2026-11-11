@@ -2,6 +2,7 @@ package net.simpleshop;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class ShopPlugin extends JavaPlugin implements Listener {
+
+    private static final TextColor FUCHSIA = TextColor.color(0xFF00FF);
 
     // category pages: 3-row chest, items centered in the MIDDLE row (slots 9-17)
     private static final int MIDDLE_ROW_START = 9;
@@ -137,7 +140,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         ItemMeta itemMeta = item.getItemMeta();
         List<Component> itemLore = new ArrayList<>();
         itemLore.add(line("You get: " + entry.give().getAmount() + "x", NamedTextColor.GRAY));
-        itemLore.add(line("Price: " + levels(entry.price()), NamedTextColor.GOLD));
+        itemLore.add(line("Price: " + priceText(entry), priceColor(entry)));
         itemMeta.lore(itemLore);
         item.setItemMeta(itemMeta);
         inv.setItem(SLOT_ITEM, item);
@@ -147,7 +150,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         ItemMeta confirmMeta = confirm.getItemMeta();
         confirmMeta.displayName(line("Confirm", NamedTextColor.GREEN));
         List<Component> confirmLore = new ArrayList<>();
-        confirmLore.add(line("Pay " + levels(entry.price()), NamedTextColor.GOLD));
+        confirmLore.add(line("Pay " + priceText(entry), priceColor(entry)));
         confirmMeta.lore(confirmLore);
         confirm.setItemMeta(confirmMeta);
         inv.setItem(SLOT_CONFIRM, confirm);
@@ -159,7 +162,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         ItemStack item = entry.icon().clone();
         ItemMeta meta = item.getItemMeta();
         List<Component> lore = new ArrayList<>();
-        lore.add(line("Price: " + levels(entry.price()), NamedTextColor.GOLD));
+        lore.add(line("Price: " + priceText(entry), priceColor(entry)));
         lore.add(line("You get: " + entry.give().getAmount() + "x", NamedTextColor.GRAY));
         lore.add(line("Click to buy", NamedTextColor.YELLOW));
         meta.lore(lore);
@@ -238,13 +241,28 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
 
     private void buy(Player player, Catalog.Entry entry) {
         int price = entry.price();
-        if (player.getLevel() < price) {
-            player.sendMessage(Component.text("You need " + levels(price) + " to buy that.", NamedTextColor.RED));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            return;
-        }
 
-        player.setLevel(player.getLevel() - price);
+        if (entry.currency() == Catalog.Currency.SHARDS) {
+            // shards live in the ShardShop plugin
+            if (!ShardBridge.isAvailable()) {
+                player.sendMessage(Component.text("Shards are unavailable right now.", NamedTextColor.RED));
+                return;
+            }
+            if (!ShardBridge.take(player.getUniqueId(), price)) {
+                player.sendMessage(Component.text("You need ", NamedTextColor.RED)
+                        .append(Component.text(shards(price), FUCHSIA))
+                        .append(Component.text(" to buy that.", NamedTextColor.RED)));
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return;
+            }
+        } else {
+            if (player.getLevel() < price) {
+                player.sendMessage(Component.text("You need " + levels(price) + " to buy that.", NamedTextColor.RED));
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return;
+            }
+            player.setLevel(player.getLevel() - price);
+        }
 
         Map<Integer, ItemStack> leftover = player.getInventory().addItem(entry.give().clone());
         for (ItemStack rest : leftover.values()) {
@@ -253,7 +271,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
 
         player.sendMessage(Component.text("Bought " + entry.give().getAmount() + "x ", NamedTextColor.GREEN)
                 .append(entry.name().color(NamedTextColor.WHITE))
-                .append(Component.text(" for " + levels(price) + ".", NamedTextColor.GREEN)));
+                .append(Component.text(" for " + priceText(entry) + ".", NamedTextColor.GREEN)));
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
     }
 
@@ -263,7 +281,19 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         return n == 1 ? "1 level" : n + " levels";
     }
 
-    private static Component line(String text, NamedTextColor color) {
+    private static String shards(int n) {
+        return n == 1 ? "1 Shard" : n + " Shards";
+    }
+
+    private static String priceText(Catalog.Entry entry) {
+        return entry.currency() == Catalog.Currency.SHARDS ? shards(entry.price()) : levels(entry.price());
+    }
+
+    private static TextColor priceColor(Catalog.Entry entry) {
+        return entry.currency() == Catalog.Currency.SHARDS ? FUCHSIA : NamedTextColor.GOLD;
+    }
+
+    private static Component line(String text, TextColor color) {
         return Component.text(text, color).decoration(TextDecoration.ITALIC, false);
     }
 }
