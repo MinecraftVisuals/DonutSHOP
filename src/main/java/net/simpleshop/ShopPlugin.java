@@ -58,6 +58,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new SpawnProtection(this), this);
         getServer().getPluginManager().registerEvents(new CombatTag(this), this);
+        getServer().getPluginManager().registerEvents(new TeleportManager(this), this);
         getServer().getPluginManager().registerEvents(new PickaxeListener(toolKey), this);
 
         enderChests = new EnderChests(this);
