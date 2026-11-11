@@ -1,3 +1,4 @@
+
 package net.simpleshop;
 
 import net.kyori.adventure.text.Component;
@@ -48,6 +49,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
         catalog = Catalog.build();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new SpawnProtection(this), this);
+        getServer().getPluginManager().registerEvents(new CombatTag(this), this);
 
         enderChests = new EnderChests(this);
         getServer().getPluginManager().registerEvents(enderChests, this);
