@@ -3,6 +3,7 @@ version: 1.0.0
 main: net.simpleshop.ShopPlugin
 api-version: '1.21'
 description: XP level shop and spawn protection
+depend: [ShardShop]
 commands:
   shop:
     description: Open the shop
