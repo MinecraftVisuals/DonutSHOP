@@ -1,38 +1,36 @@
 package net.simpleshop;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
+import org.bukkit.potion.PotionType;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class Catalog {
 
     public static final int SPAWNER_PRICE = 10;
     public static final int STACK_PRICE = 1;
 
-    // Anything in here can never be sold.
-    private static final Set<Material> EXCLUDED = Set.of(Material.EXPERIENCE_BOTTLE);
-
     // give = what the player receives, icon = what is shown in the menu
     public record Entry(ItemStack give, ItemStack icon, Component name, int price) {}
 
+    // Main menu slots are in the middle row (11-15)
     public enum Category {
         END("End", Material.END_STONE, 11),
         NETHER("Nether", Material.NETHER_WART_BLOCK, 12),
-        PVP("PvP", Material.TOTEM_OF_UNDYING, 13),
+        GEAR("Gear", Material.TOTEM_OF_UNDYING, 13),
         FOOD("Food", Material.COOKED_BEEF, 14),
-        SPAWNERS("Spawners", Material.AMETHYST_SHARD, 15);
+        SHARDS("Shards", Material.AMETHYST_SHARD, 15);
 
         public final String title;
         public final Material icon;
@@ -55,60 +53,30 @@ public final class Catalog {
             map.put(c, new ArrayList<>());
         }
 
-        // ---- PvP ----
-        addNamed(map.get(Category.PVP),
-                "TOTEM_OF_UNDYING", "GLOWSTONE", "RESPAWN_ANCHOR", "END_CRYSTAL",
-                "OBSIDIAN", "ENDER_PEARL", "GOLDEN_APPLE", "ARROW", "SPECTRAL_ARROW");
+        // ---- End (9) ----
+        addNamed(map.get(Category.END),
+                "ENDER_CHEST", "ENDER_PEARL", "END_STONE", "DRAGON_BREATH", "END_ROD",
+                "CHORUS_FRUIT", "PURPUR_PILLAR", "PURPUR_STAIRS", "PURPUR_BLOCK");
 
-        // ---- Nether ----
+        // ---- Nether (8) ----
         addNamed(map.get(Category.NETHER),
-                "NETHERRACK", "CRIMSON_NYLIUM", "WARPED_NYLIUM",
-                "CRIMSON_STEM", "WARPED_STEM", "STRIPPED_CRIMSON_STEM", "STRIPPED_WARPED_STEM",
-                "CRIMSON_HYPHAE", "WARPED_HYPHAE", "CRIMSON_PLANKS", "WARPED_PLANKS",
-                "NETHER_WART_BLOCK", "WARPED_WART_BLOCK", "SHROOMLIGHT",
-                "CRIMSON_FUNGUS", "WARPED_FUNGUS", "CRIMSON_ROOTS", "WARPED_ROOTS",
-                "NETHER_SPROUTS", "WEEPING_VINES", "TWISTING_VINES", "NETHER_WART",
-                "SOUL_SAND", "SOUL_SOIL", "BASALT", "POLISHED_BASALT", "SMOOTH_BASALT",
-                "BLACKSTONE", "GILDED_BLACKSTONE", "POLISHED_BLACKSTONE",
-                "CHISELED_POLISHED_BLACKSTONE", "POLISHED_BLACKSTONE_BRICKS",
-                "CRACKED_POLISHED_BLACKSTONE_BRICKS",
-                "NETHER_BRICK", "NETHER_BRICKS", "CRACKED_NETHER_BRICKS",
-                "CHISELED_NETHER_BRICKS", "RED_NETHER_BRICKS",
-                "MAGMA_BLOCK", "GLOWSTONE", "GLOWSTONE_DUST",
-                "QUARTZ", "QUARTZ_BLOCK", "NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
-                "ANCIENT_DEBRIS", "NETHERITE_SCRAP", "NETHERITE_INGOT",
-                "CRYING_OBSIDIAN", "BLAZE_ROD", "BLAZE_POWDER", "GHAST_TEAR", "MAGMA_CREAM",
-                "SOUL_TORCH", "SOUL_LANTERN", "SOUL_CAMPFIRE", "RESPAWN_ANCHOR",
-                "BONE_BLOCK", "LODESTONE");
+                "BLAZE_ROD", "BLAZE_POWDER", "MAGMA_CREAM", "GHAST_TEAR",
+                "NETHER_QUARTZ_ORE", "ANCIENT_DEBRIS", "MAGMA_BLOCK", "CRYING_OBSIDIAN");
 
-        // ---- End ----
-        List<Entry> end = map.get(Category.END);
-        addNamed(end,
-                "END_STONE", "END_STONE_BRICKS", "END_STONE_BRICK_STAIRS",
-                "END_STONE_BRICK_SLAB", "END_STONE_BRICK_WALL",
-                "PURPUR_BLOCK", "PURPUR_PILLAR", "PURPUR_STAIRS", "PURPUR_SLAB",
-                "CHORUS_FLOWER", "CHORUS_FRUIT", "POPPED_CHORUS_FRUIT", "END_ROD",
-                "ENDER_PEARL", "ENDER_EYE", "END_CRYSTAL", "ENDER_CHEST",
-                "SHULKER_SHELL", "ELYTRA", "DRAGON_BREATH", "DRAGON_HEAD", "DRAGON_EGG");
-        for (Material m : Material.values()) {
-            if (!m.isLegacy() && m.name().endsWith("SHULKER_BOX")) {
-                addStack(end, m);
-            }
-        }
+        // ---- Gear (9) ----
+        List<Entry> gear = map.get(Category.GEAR);
+        addNamed(gear, "OBSIDIAN", "END_CRYSTAL", "RESPAWN_ANCHOR", "GLOWSTONE",
+                "TOTEM_OF_UNDYING", "ENDER_PEARL", "GOLDEN_APPLE");
+        addPotion(gear, PotionType.SWIFTNESS, "Potion of Swiftness"); // change this if you want another potion
+        addNamed(gear, "ARROW");
 
-        // ---- Food (everything edible) ----
-        List<Material> foods = new ArrayList<>();
-        for (Material m : Material.values()) {
-            if (m.isLegacy() || !m.isItem() || !m.isEdible()) continue;
-            foods.add(m);
-        }
-        foods.sort(Comparator.comparing(Material::name));
-        for (Material m : foods) {
-            addStack(map.get(Category.FOOD), m);
-        }
+        // ---- Food (9) ----
+        addNamed(map.get(Category.FOOD),
+                "BAKED_POTATO", "SWEET_BERRIES", "MELON_SLICE", "CARROT", "APPLE",
+                "COOKED_CHICKEN", "COOKED_BEEF", "GOLDEN_CARROT", "GOLDEN_APPLE");
 
-        // ---- Spawners (only these five) ----
-        addSpawners(map.get(Category.SPAWNERS));
+        // ---- Shards / Spawners (max 9) ----
+        addSpawners(map.get(Category.SHARDS));
 
         return map;
     }
@@ -120,12 +88,17 @@ public final class Catalog {
     }
 
     private static void addStack(List<Entry> list, Material m) {
-        if (m == null || EXCLUDED.contains(m)) return;
-        for (Entry e : list) {
-            if (e.give().getType() == m) return; // no duplicates
-        }
+        if (m == null) return;
         ItemStack give = new ItemStack(m, m.getMaxStackSize());
         list.add(new Entry(give, give.clone(), Component.text(pretty(m.name())), STACK_PRICE));
+    }
+
+    private static void addPotion(List<Entry> list, PotionType type, String displayName) {
+        ItemStack potion = new ItemStack(Material.POTION);
+        PotionMeta meta = (PotionMeta) potion.getItemMeta();
+        meta.setBasePotionType(type);
+        potion.setItemMeta(meta);
+        list.add(new Entry(potion, potion.clone(), Component.text(displayName), STACK_PRICE));
     }
 
     private static void addSpawners(List<Entry> list) {
@@ -135,6 +108,8 @@ public final class Catalog {
                 new Mob(EntityType.CREEPER, "Creeper"),
                 new Mob(EntityType.ZOMBIFIED_PIGLIN, "Zombie Piglin"),
                 new Mob(EntityType.BLAZE, "Blaze")
+                // add more here, up to 9 total, e.g.:
+                // new Mob(EntityType.ZOMBIE, "Zombie"),
         };
 
         for (Mob mob : mobs) {
@@ -149,7 +124,6 @@ public final class Catalog {
             meta.displayName(name);
             spawner.setItemMeta(meta);
 
-            // the spawner block itself is also the icon, so it shows the spawner texture
             list.add(new Entry(spawner, spawner.clone(), name, SPAWNER_PRICE));
         }
     }
