@@ -1,4 +1,3 @@
-
 name: SimpleShop
 version: 1.0.0
 main: net.simpleshop.ShopPlugin
@@ -38,7 +37,7 @@ commands:
 
 permissions:
   shardshop.admin:
-    description: Allows giving shards to players
+    description: Allows giving shards
     default: op
 
   simpleshop.spawn.bypass:
