@@ -24,7 +24,9 @@ import java.util.Map;
 public final class Catalog {
 
     public static final int SPAWNER_PRICE = 250; // paid in shards
-    public static final int STACK_PRICE = 1;     // paid in XP levels
+    public static final int STACK_PRICE = 10;    // paid in shards (End, Nether, Food, Blocks)
+    public static final int GEAR_PRICE = 25;     // paid in shards (everything in Gear except the totem)
+    public static final int TOTEM_PRICE = 10;    // paid in shards
 
     // Shard Pickaxe: sits in the Shards menu directly under the middle spawner (slot 13 -> 22)
     public static final int PICKAXE_PRICE = 100; // paid in shards
@@ -35,9 +37,9 @@ public final class Catalog {
 
     // give = what the player receives, icon = what is shown in the menu
     public record Entry(ItemStack give, ItemStack icon, Component name, int price, Currency currency) {
-        // everything defaults to XP levels unless a currency is given
+        // everything defaults to shards unless a currency is given
         public Entry(ItemStack give, ItemStack icon, Component name, int price) {
-            this(give, icon, name, price, Currency.LEVELS);
+            this(give, icon, name, price, Currency.SHARDS);
         }
     }
 
@@ -72,24 +74,25 @@ public final class Catalog {
         }
 
         // ---- End (9) ----
-        addNamed(map.get(Category.END),
+        addNamed(map.get(Category.END), STACK_PRICE,
                 "ENDER_CHEST", "ENDER_PEARL", "END_STONE", "DRAGON_BREATH", "END_ROD",
                 "CHORUS_FRUIT", "PURPUR_PILLAR", "PURPUR_STAIRS", "PURPUR_BLOCK");
 
         // ---- Nether (8) ----
-        addNamed(map.get(Category.NETHER),
+        addNamed(map.get(Category.NETHER), STACK_PRICE,
                 "BLAZE_ROD", "BLAZE_POWDER", "MAGMA_CREAM", "GHAST_TEAR",
                 "NETHER_QUARTZ_ORE", "ANCIENT_DEBRIS", "MAGMA_BLOCK", "CRYING_OBSIDIAN");
 
-        // ---- Gear (9) ----
+        // ---- Gear (9): 25 shards each, totem is 10 ----
         List<Entry> gear = map.get(Category.GEAR);
-        addNamed(gear, "OBSIDIAN", "END_CRYSTAL", "RESPAWN_ANCHOR", "GLOWSTONE",
-                "TOTEM_OF_UNDYING", "ENDER_PEARL", "GOLDEN_APPLE");
-        addPotion(gear, PotionType.SWIFTNESS, "Potion of Swiftness"); // change this if you want another potion
-        addNamed(gear, "ARROW");
+        addNamed(gear, GEAR_PRICE, "OBSIDIAN", "END_CRYSTAL", "RESPAWN_ANCHOR", "GLOWSTONE");
+        addNamed(gear, TOTEM_PRICE, "TOTEM_OF_UNDYING");
+        addNamed(gear, GEAR_PRICE, "ENDER_PEARL", "GOLDEN_APPLE");
+        addPotion(gear, PotionType.SWIFTNESS, "Potion of Swiftness", GEAR_PRICE); // change this if you want another potion
+        addNamed(gear, GEAR_PRICE, "ARROW");
 
         // ---- Food (9) ----
-        addNamed(map.get(Category.FOOD),
+        addNamed(map.get(Category.FOOD), STACK_PRICE,
                 "BAKED_POTATO", "SWEET_BERRIES", "MELON_SLICE", "CARROT", "APPLE",
                 "COOKED_CHICKEN", "COOKED_BEEF", "GOLDEN_CARROT", "GOLDEN_APPLE");
 
@@ -97,7 +100,7 @@ public final class Catalog {
         addSpawners(map.get(Category.SHARDS));
 
         // ---- Blocks (7) ----
-        addNamed(map.get(Category.BLOCKS),
+        addNamed(map.get(Category.BLOCKS), STACK_PRICE,
                 "SPRUCE_LOG", "DIORITE", "OAK_LOG", "STONE_BRICKS",
                 "BIRCH_LOG", "PALE_OAK_LOG", "SAND");
 
@@ -126,24 +129,24 @@ public final class Catalog {
         return new Entry(item, item.clone(), name, PICKAXE_PRICE, Currency.SHARDS);
     }
 
-    private static void addNamed(List<Entry> list, String... names) {
+    private static void addNamed(List<Entry> list, int price, String... names) {
         for (String n : names) {
-            addStack(list, Material.getMaterial(n));
+            addStack(list, Material.getMaterial(n), price);
         }
     }
 
-    private static void addStack(List<Entry> list, Material m) {
+    private static void addStack(List<Entry> list, Material m, int price) {
         if (m == null) return;
         ItemStack give = new ItemStack(m, m.getMaxStackSize());
-        list.add(new Entry(give, give.clone(), Component.text(pretty(m.name())), STACK_PRICE));
+        list.add(new Entry(give, give.clone(), Component.text(pretty(m.name())), price, Currency.SHARDS));
     }
 
-    private static void addPotion(List<Entry> list, PotionType type, String displayName) {
+    private static void addPotion(List<Entry> list, PotionType type, String displayName, int price) {
         ItemStack potion = new ItemStack(Material.POTION);
         PotionMeta meta = (PotionMeta) potion.getItemMeta();
         meta.setBasePotionType(type);
         potion.setItemMeta(meta);
-        list.add(new Entry(potion, potion.clone(), Component.text(displayName), STACK_PRICE));
+        list.add(new Entry(potion, potion.clone(), Component.text(displayName), price, Currency.SHARDS));
     }
 
     private static void addSpawners(List<Entry> list) {
