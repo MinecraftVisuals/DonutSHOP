@@ -22,13 +22,20 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public final class ShopPlugin extends JavaPlugin implements Listener {
 
     private static final TextColor FUCHSIA = TextColor.color(0xFF00FF);
+
+    // /giveshards
+    private static final String ADMIN_PERMISSION = "shardshop.admin";
+    private static final int MAX_GIVE_AMOUNT = 1_000_000;            // per transaction
+    private static final Pattern WHOLE_NUMBER = Pattern.compile("-?\\d+"); // digits only, optional leading minus
 
     // category pages: 3-row chest, items centered in the MIDDLE row (slots 9-17)
     private static final int MIDDLE_ROW_START = 9;
@@ -121,6 +128,14 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
     }
 
     private boolean onGiveShardsCommand(CommandSender sender, Command command, String label, String[] args) {
+        // Server-side permission check. plugin.yml already blocks the command, but we never rely on that alone.
+        // The console (and command blocks) always pass hasPermission; players need shardshop.admin (OP by default).
+        if (!sender.hasPermission(ADMIN_PERMISSION)) {
+            sender.sendMessage(Component.text("You do not have permission to use this command.", NamedTextColor.RED));
+            getLogger().warning(sender.getName() + " tried to use /giveshards without permission.");
+            return true;
+        }
+
         if (args.length != 2) {
             sender.sendMessage(Component.text("Usage: /giveshards <player> <amount>", NamedTextColor.RED));
             return true;
@@ -132,28 +147,67 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
             return true;
         }
 
-        int amount;
-        try {
-            amount = Integer.parseInt(args[1]);
-        } catch (NumberFormatException e) {
-            sender.sendMessage(Component.text("Amount must be a number.", NamedTextColor.RED));
+        Integer parsed = parseGiveAmount(sender, args[1]);
+        if (parsed == null) return true; // the reason was already sent to the sender
+        int amount = parsed;
+
+        // add() refuses if the balance would go past the maximum, so nothing can overflow or wrap around
+        if (!shardManager.add(target.getUniqueId(), amount)) {
+            sender.sendMessage(Component.text(target.getName() + " can't hold that many Shards.", NamedTextColor.RED));
             return true;
         }
+        boolean saved = shardManager.save();
 
-        if (amount <= 0) {
-            sender.sendMessage(Component.text("Amount must be above 0.", NamedTextColor.RED));
-            return true;
+        getLogger().info(sender.getName() + " gave " + amount + " shards to " + target.getName()
+                + " (new balance: " + shardManager.get(target.getUniqueId()) + ")");
+
+        // confirmation for the sender
+        if (target.equals(sender)) {
+            sender.sendMessage(Component.text("You gave yourself ")
+                    .append(Component.text(shards(amount), FUCHSIA))
+                    .append(Component.text(".")));
+        } else {
+            sender.sendMessage(Component.text("Gave ")
+                    .append(Component.text(shards(amount), FUCHSIA))
+                    .append(Component.text(" to " + target.getName() + ".")));
+
+            // confirmation for the recipient
+            target.sendMessage(Component.text("You received ")
+                    .append(Component.text(shards(amount), FUCHSIA))
+                    .append(Component.text(" from " + sender.getName() + ".")));
         }
 
-        shardManager.add(target.getUniqueId(), amount);
-        shardManager.save();
-
-        sender.sendMessage(Component.text("Gave ")
-                .append(Component.text(amount + " Shards", FUCHSIA))
-                .append(Component.text(" to " + target.getName() + ".")));
-        target.sendMessage(Component.text("You received ")
-                .append(Component.text(amount + " Shards", FUCHSIA)));
+        if (!saved) {
+            sender.sendMessage(Component.text(
+                    "Warning: the shards were given but shards.yml could not be saved. Check the console.",
+                    NamedTextColor.RED));
+        }
         return true;
+    }
+
+    /**
+     * Turns the amount argument into an int between 1 and MAX_GIVE_AMOUNT.
+     * Sends the reason to the sender and returns null if the input is not acceptable.
+     */
+    private static Integer parseGiveAmount(CommandSender sender, String raw) {
+        // only plain digits (optionally with a leading minus): rejects "abc", "1.5", "1e6", "+5", " 5", "", ...
+        if (!WHOLE_NUMBER.matcher(raw).matches()) {
+            sender.sendMessage(Component.text("Amount must be a whole number.", NamedTextColor.RED));
+            return null;
+        }
+
+        // BigInteger so absurdly long numbers are classified correctly instead of overflowing
+        BigInteger value = new BigInteger(raw);
+        if (value.signum() <= 0) {
+            sender.sendMessage(Component.text("Amount must be above 0.", NamedTextColor.RED));
+            return null;
+        }
+        if (value.compareTo(BigInteger.valueOf(MAX_GIVE_AMOUNT)) > 0) {
+            // keep this text in sync with MAX_GIVE_AMOUNT
+            sender.sendMessage(Component.text("You can give at most 1,000,000 Shards at once.", NamedTextColor.RED));
+            return null;
+        }
+        return value.intValueExact();
     }
 
     // first slot of the middle row so that `count` items are centered
