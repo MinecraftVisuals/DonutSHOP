@@ -27,6 +27,7 @@ public final class Catalog {
     public static final int STACK_PRICE = 10;    // paid in shards (End, Nether, Food, Blocks)
     public static final int GEAR_PRICE = 25;     // paid in shards (everything in Gear except the totem)
     public static final int TOTEM_PRICE = 10;    // paid in shards
+    public static final int PEARL_PRICE = 1;     // paid in shards (16 Ender Pearls, in End and Gear)
 
     // Shard Pickaxe: sits in the Shards menu directly under the middle spawner (slot 13 -> 22)
     public static final int PICKAXE_PRICE = 100; // paid in shards
@@ -131,7 +132,8 @@ public final class Catalog {
 
     private static void addNamed(List<Entry> list, int price, String... names) {
         for (String n : names) {
-            addStack(list, Material.getMaterial(n), price);
+            int p = n.equals("ENDER_PEARL") ? PEARL_PRICE : price; // pearls always cost PEARL_PRICE
+            addStack(list, Material.getMaterial(n), p);
         }
     }
 
