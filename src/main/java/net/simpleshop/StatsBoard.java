@@ -25,9 +25,9 @@ public final class StatsBoard implements Listener {
 
     // Your GitHub resource pack download link
     private static final String PACK_URL =
-            "https://github.com/MinecraftVisuals/DonutSHOP/releases/download/r1313/StatsBoard-ResourcePack.zip";
+            "https://github.com/MinecraftVisuals/coe/releases/download/cow/newpack.zip";
 
-    // SHA-1 hash of the NEW resource pack (must match the zip you upload)
+    // SHA-1 hash of the resource pack (newpack.zip)
     private static final String PACK_SHA1 =
             "0a083f107d9f8fb4618a8a485e5f691db42a79a2";
 
@@ -132,9 +132,8 @@ public final class StatsBoard implements Listener {
 
         int playerShards = shards.applyAsInt(p.getUniqueId());
 
-        // The player name is the scoreboard TITLE (top row). Previously the
-        // title was empty and the name was a separate line below it, which
-        // caused the blank gap above the name.
+        // The player name is the scoreboard TITLE (top row), so there is no
+        // blank gap above it.
         obj.displayName(Component.text(p.getName(), NamedTextColor.WHITE));
 
         setLine(
