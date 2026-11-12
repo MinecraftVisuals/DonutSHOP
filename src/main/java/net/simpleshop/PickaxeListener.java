@@ -2,6 +2,8 @@ package net.simpleshop;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/** Makes the Shard Pickaxe break a 3x3 area. */
+/** Makes the Shard Pickaxe break a 3x3 area and play a sound. */
 public final class PickaxeListener implements Listener {
 
     /** Key the old ShardShop plugin used, so pickaxes players already own keep working. */
@@ -49,7 +51,12 @@ public final class PickaxeListener implements Listener {
         ItemStack tool = player.getInventory().getItemInMainHand();
         if (!isShardPickaxe(tool)) return;
 
-        breakArea(player, event.getBlock(), tool);
+        // play once per swing (not once per block of the 3x3), for everyone nearby
+        Block origin = event.getBlock();
+        origin.getWorld().playSound(origin.getLocation().add(0.5, 0.5, 0.5),
+                Sound.BLOCK_AMETHYST_BLOCK_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+        breakArea(player, origin, tool);
     }
 
     private void breakArea(Player player, Block origin, ItemStack tool) {
