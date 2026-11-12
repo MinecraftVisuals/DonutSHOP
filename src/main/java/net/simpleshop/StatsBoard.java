@@ -29,7 +29,7 @@ public final class StatsBoard implements Listener {
 
     // SHA-1 hash of the resource pack (newpack.zip)
     private static final String PACK_SHA1 =
-            "0a083f107d9f8fb4618a8a485e5f691db42a79a2";
+            "7f569e36e0743e58fc5af5e49495e6a3b450bb0b";
 
     // Resource pack icons
     private static final String ICON_SHARDS = "\uE000";
