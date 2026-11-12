@@ -51,6 +51,7 @@ public final class ShopPlugin extends JavaPlugin implements Listener {
 
         shardManager = new ShardManager(this);
         shardManager.load();
+        new StatsBoard(this, shardManager::get).start();
 
         NamespacedKey toolKey = new NamespacedKey(this, "tool");
         catalog = Catalog.build();
