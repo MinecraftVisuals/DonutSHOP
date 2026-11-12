@@ -1,4 +1,3 @@
-
 package net.simpleshop;
 
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
@@ -28,9 +27,9 @@ public final class StatsBoard implements Listener {
     private static final String PACK_URL =
             "https://github.com/MinecraftVisuals/DonutSHOP/releases/download/r1313/StatsBoard-ResourcePack.zip";
 
-    // SHA-1 hash of the resource pack
+    // SHA-1 hash of the NEW resource pack (must match the zip you upload)
     private static final String PACK_SHA1 =
-            "5af189f3e2252f06a521a05bbb7083d79f9477df";
+            "0a083f107d9f8fb4618a8a485e5f691db42a79a2";
 
     // Resource pack icons
     private static final String ICON_SHARDS = "\uE000";
@@ -104,7 +103,7 @@ public final class StatsBoard implements Listener {
         Objective obj = board.registerNewObjective(
                 "stats",
                 Criteria.DUMMY,
-                Component.empty()
+                Component.text(p.getName(), NamedTextColor.WHITE)
         );
 
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -133,12 +132,10 @@ public final class StatsBoard implements Listener {
 
         int playerShards = shards.applyAsInt(p.getUniqueId());
 
-        setLine(
-                obj,
-                4,
-                "l0",
-                Component.text(p.getName(), NamedTextColor.WHITE)
-        );
+        // The player name is the scoreboard TITLE (top row). Previously the
+        // title was empty and the name was a separate line below it, which
+        // caused the blank gap above the name.
+        obj.displayName(Component.text(p.getName(), NamedTextColor.WHITE));
 
         setLine(
                 obj,
