@@ -1,35 +1,46 @@
+
 name: SimpleShop
 version: 1.0.0
 main: net.simpleshop.ShopPlugin
 api-version: '1.21'
 description: Shard shop, shard earning, 3x3 Shard Pickaxe and spawn protection
+
 commands:
   shop:
     description: Open the shop
     usage: /shop
+
   shards:
     description: Shows your shard balance
     usage: /shards
+
   giveshards:
     description: Give shards to a player
     usage: /giveshards <player> <amount>
     permission: shardshop.admin
+    permission-message: You do not have permission to use this command.
+
   tp:
     description: Send a teleport request to a player
     usage: /tp <player>
+
   tphere:
     description: Ask a player to teleport to you
     usage: /tphere <player>
+
   tpaccept:
     description: Accept a teleport request
     usage: /tpaccept [player]
+
   tpdeny:
     description: Deny a teleport request
     usage: /tpdeny [player]
+
 permissions:
   shardshop.admin:
-    description: Allows giving shards
+    description: Allows giving shards to players
     default: op
+
   simpleshop.spawn.bypass:
     description: Build and break blocks inside the protected spawn area
     default: false
