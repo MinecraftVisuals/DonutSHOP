@@ -2,7 +2,7 @@ name: SimpleShop
 version: 1.0.0
 main: net.simpleshop.ShopPlugin
 api-version: '1.21'
-description: XP level + shard shop, shard earning, 3x3 Shard Pickaxe and spawn protection
+description: Shard shop, shard earning, 3x3 Shard Pickaxe and spawn protection
 commands:
   shop:
     description: Open the shop
